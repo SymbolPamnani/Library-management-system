@@ -1,3 +1,4 @@
+import json
 class Student:
 
     def __init__(self, first_name, last_name, regno, program,  email):
@@ -17,7 +18,47 @@ class Student:
         print("----------------")
 
 students = []
+def save_students():
 
+    data = []
+
+    for s in students:
+
+        student = {
+            "first_name": s.first_name,
+            "last_name": s.last_name,
+            "regno": s.regno,
+            "program": s.program,
+            "email": s.email
+        }
+
+        data.append(student)
+
+    with open("students.json", "w") as file:
+        json.dump(data, file, indent=4)
+
+def load_students():
+
+    global students
+
+    try:
+        with open("students.json", "r") as file:
+            data = json.load(file)
+
+            for student in data:
+
+                new_student = Student(
+                    student["first_name"],
+                    student["last_name"],
+                    student["regno"],
+                    student["program"],
+                    student["email"]
+                )
+
+                students.append(new_student)
+
+    except FileNotFoundError:
+        pass
 
 def dashboard1():
     print("\n======Student Management System======\n")
@@ -40,13 +81,18 @@ def add_student():
     email = input("Enter email: ")
 
     new_student = Student(first_name, last_name , regno, program, email)
+    for s in students:
+        if s.regno.lower() == regno.lower():
+            print("Registration number already exists!")
+            return
     students.append(new_student)
+    save_students()
 
     print("Student added successfully")
 
 
 def show_student():
-    if len(students) == 0:
+    if not students:
         print("No student found")
     else:
         for s in students:     
@@ -59,7 +105,7 @@ def search_student():
     found = False
 
     for s in students:
-        if number == s.regno:
+        if number.lower() == s.regno.lower():
             print("\nStudent Found!")
             s.show()
             found = True
@@ -75,9 +121,10 @@ def remove_student():
     found = False
 
     for s in students:
-        if number == s.regno:
+        if number.lower() == s.regno.lower():
             s.show()
             students.remove(s)
+            save_students()
             print("\nStudent Removed.")
             found = True
             break
@@ -91,7 +138,7 @@ def update_student():
     found = False
 
     for s in students:
-        if number == s.regno:
+        if number.lower() == s.regno.lower():
 
             print("\nCurrent Student Details:")
             s.show()
@@ -102,8 +149,9 @@ def update_student():
             s.last_name = input("Last Name: ")
             s.program = input("Program: ")
             s.email = input("Email: ")
-
+            save_students()
             print("\nStudent updated successfully!")
+            
 
             found = True
             break
@@ -165,7 +213,44 @@ class Book:
         print("----------------")
 
 books = []
+def save_books():
 
+    books_data = []
+
+    for b in books:
+
+        book = {
+            "title": b.title,
+            "author": b.author,
+            "availability": b.availability,
+
+        }
+
+        books_data.append(book)
+
+    with open("books.json", "w") as file:
+        json.dump(books_data, file, indent=4)
+
+def load_books():
+
+    global books
+
+    try:
+        with open("books.json", "r") as file:
+            data = json.load(file)
+
+            for book in data:
+
+                new_book = Book(
+                    book["title"],
+                    book["author"],
+                    book["availability"]
+                )
+
+                books.append(new_book)
+
+    except FileNotFoundError:
+        pass
 
 def dashboard2():
     print("\n======Books Management======\n")
@@ -183,17 +268,31 @@ def welcome2():
 def add_book():
     title = input("Title: ")
     author = input("Author: ")
-    availability = int(input("Availability: "))
+    while True:
+        try:
+            availability = int(input("Availability: "))
 
+            if availability < 0:
+                print("Availability cannot be negative.")
+                continue
+
+            break
+
+        except ValueError:
+            print("Please enter a valid number.")
 
     new_book = Book(title, author, availability)
+    for b in books:
+        if b.title.lower() == title.lower():
+            print("Book already exists!")
+            return
     books.append(new_book)
-
+    save_books()
     print("\nBook added successfully\n")
 
 
 def show_book():
-    if len(books) == 0:
+    if not books:
         print("No book found")
     else:
         for b in books:     
@@ -201,12 +300,12 @@ def show_book():
 
 
 def search_book():
-    Title = input("Enter title: ")
+    title = input("Enter title: ")
 
     found = False
 
     for b in books:
-        if Title == b.title:
+        if title.lower() == b.title.lower():
             print("\nBook Found!")
             b.show()
             found = True
@@ -217,14 +316,15 @@ def search_book():
 
 
 def remove_book():
-    Title = input("Enter title: ")
+    title = input("Enter title: ")
 
     found = False
 
     for b in books:
-        if Title == b.title:
+        if title.lower() == b.title.lower():
             b.show()
             books.remove(b)
+            save_books()
             print("\nBook Removed.")
             found = True
             break
@@ -233,12 +333,12 @@ def remove_book():
         print("Book not found!")
 
 def update_book():
-    Title = input("Enter title to update: ")
+    title = input("Enter title to update: ")
 
     found = False
 
     for b in books:
-        if Title == b.title:
+        if title.lower() == b.title.lower():
 
             print("\nCurrent Book Details:")
             b.show()
@@ -247,7 +347,20 @@ def update_book():
 
             b.title = input("Title: ")
             b.author = input("Author: ")
-            b.availability = int(input("Quantity: "))
+            while True:
+                try:
+                    b.availability = int(input("Quantity: "))
+
+                    if b.availability < 0:
+                        print("Quantity cannot be negative.")
+                        continue
+                
+
+                    break
+
+                except ValueError:
+                    print("Please enter a valid number.")
+            save_books()
 
             print("\nBook updated successfully!")
 
@@ -313,25 +426,72 @@ class BorrowRecord():
 
     def show(self):
         print("-----------------------------")
-        print("Student Name: ", self.student)
+        print("Student: ", self.student)
         print("Book Title: ", self.title)
         print("Quantity: ", self.quantity)
         print("-----------------------------")
     
 borrowed = []
+def save_borrowed():
+
+    borrowed_data = []
+
+    for borrow in borrowed:
+
+        borrows = {
+            "student": borrow.student,
+            "title": borrow.title,
+            "quantity": borrow.quantity,
+        }
+
+        borrowed_data.append(borrows)
+
+    with open("library.json", "w") as file:
+        json.dump(borrowed_data, file, indent=4)
+
+def load_borrowed():
+
+    global borrowed
+
+    try:
+        with open("library.json", "r") as file:
+            data = json.load(file)
+
+            for record in data:
+
+                new_record = BorrowRecord(
+                    record["student"],
+                    record["title"],
+                    record["quantity"]
+                )
+
+                borrowed.append(new_record)
+
+    except FileNotFoundError:
+        pass
 
 def borrow_books():
 
     regno = input("Enter Student Registration Number: ")
     title = input("Enter Book Title: ")
-    quantity = int(input("Enter Quantity: "))
+    while True:
+        try:
+            quantity = int(input("Enter Quantity: "))
 
+            if quantity <= 0:
+                print("Quantity must be greater than zero.")
+                continue
+                        
+            break
+
+        except ValueError:
+            print("Please enter a valid quantity.")
     student_found = None
     book_found = None
 
     # Search student
     for s in students:
-        if s.regno == regno:
+        if s.regno.lower() == regno.lower():
             student_found = s
             break
 
@@ -341,7 +501,7 @@ def borrow_books():
 
     # Search book
     for b in books:
-        if b.title == title:
+        if b.title.lower() == title.lower():
             book_found = b
             break
 
@@ -365,7 +525,8 @@ def borrow_books():
 )
 
     borrowed.append(record)
-
+    save_borrowed()
+    save_books()      
     print("Book borrowed successfully!")
 
 def return_books():
@@ -377,28 +538,28 @@ def return_books():
 
     for record in borrowed:
 
-        if record.student == regno and record.title == title:
-
-            if record.title == title:
+        if (record.student.lower() == regno.lower() and record.title.lower() == title.lower()):
 
                 # Increase availability again
-                for b in books:
-                    if b.title == title:
-                        b.availability += record.quantity
-                        break
+            for b in books:
+                if b.title == title:
+                    b.availability += record.quantity
+                    break
 
-                borrowed.remove(record)
+            borrowed.remove(record)
+            save_borrowed()
+            save_books()
 
-                print("Book returned successfully!")
+            print("Book returned successfully!")
 
-                found = True
-                break
+            found = True
+            break
 
     if not found:
         print("Borrow record not found!")
 
 def show_book_summary():
-    if len(borrowed)== 0:
+    if not borrowed:
         print("Nothing Borrowed yet!")
     else:
         for b in borrowed:
@@ -477,5 +638,8 @@ def main_menu():
         elif choice == 0:
             print("Thankyou!")
             break
-        
+
+load_students()
+load_books()
+load_borrowed()   
 main_menu()
